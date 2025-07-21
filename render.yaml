@@ -1,0 +1,52 @@
+# Barakah AI Agents - Render Deployment Configuration
+services:
+  # Backend API Service
+  - type: web
+    name: barakah-agents-api
+    runtime: node
+    plan: starter
+    region: oregon
+    buildCommand: cd backend && npm install && npm run build
+    startCommand: cd backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: FRONTEND_URL
+        fromService:
+          type: web
+          name: barakah-agents-frontend
+          property: host
+      - key: OPENAI_API_KEY
+        sync: false  # Set manually in Render dashboard
+      - key: LOG_LEVEL
+        value: info
+    healthCheckPath: /health
+    
+  # Frontend Web Service  
+  - type: web
+    name: barakah-agents-frontend
+    runtime: node
+    plan: starter
+    region: oregon
+    buildCommand: cd frontend && npm install && npm run build
+    startCommand: cd frontend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_API_URL
+        fromService:
+          type: web
+          name: barakah-agents-api
+          property: host
+      - key: NEXT_PUBLIC_APP_NAME
+        value: Barakah AI Agents
+      - key: NEXT_PUBLIC_APP_DESCRIPTION
+        value: Enterprise AI Agents Platform
+
+  # Redis Service for Rate Limiting (optional)
+  - type: redis
+    name: barakah-agents-redis
+    plan: starter
+    region: oregon
