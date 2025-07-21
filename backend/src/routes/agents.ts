@@ -1,5 +1,5 @@
 // Barakah AI Agents - Agent Management API Routes
-import express from 'express';
+import express, { Request, Response } from 'express';
 import { z } from 'zod';
 import { AgentFramework } from '../core/AgentFramework';
 import { logger } from '../utils/logger';
@@ -15,7 +15,7 @@ const executeAgentSchema = z.object({
 });
 
 // GET /api/agents - List all available agents
-router.get('/', async (req, res) => {
+router.get('/', async (req: Request, res: Response) => {
   try {
     const agents = agentFramework.getAllAgents();
     res.json({
@@ -34,7 +34,7 @@ router.get('/', async (req, res) => {
 });
 
 // GET /api/agents/:id - Get specific agent details
-router.get('/:id', async (req, res) => {
+router.get('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const agent = agentFramework.getAgent(id);
@@ -62,7 +62,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // POST /api/agents/:id/execute - Execute an agent
-router.post('/:id/execute', async (req, res) => {
+router.post('/:id/execute', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const validation = executeAgentSchema.safeParse({
@@ -106,7 +106,7 @@ router.post('/:id/execute', async (req, res) => {
 });
 
 // GET /api/agents/execution/:executionId - Get execution status
-router.get('/execution/:executionId', async (req, res) => {
+router.get('/execution/:executionId', async (req: Request, res: Response) => {
   try {
     const { executionId } = req.params;
     const execution = agentFramework.getExecution(executionId);
@@ -145,7 +145,7 @@ router.get('/execution/:executionId', async (req, res) => {
 });
 
 // GET /api/agents/executions/user/:userId - Get user's executions
-router.get('/executions/user/:userId', async (req, res) => {
+router.get('/executions/user/:userId', async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
     const { limit = 50, offset = 0 } = req.query;
@@ -179,7 +179,7 @@ router.get('/executions/user/:userId', async (req, res) => {
 });
 
 // POST /api/agents/:id/test - Test agent with sample data
-router.post('/:id/test', async (req, res) => {
+router.post('/:id/test', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const agent = agentFramework.getAgent(id);

@@ -12,7 +12,7 @@ interface RateLimitStore {
 
 class SimpleRateLimiter {
   private store: RateLimitStore = {};
-  private points: number;
+  public points: number;
   private duration: number;
   private blockDuration: number;
   private keyPrefix: string;

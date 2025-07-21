@@ -1,5 +1,5 @@
 // Barakah AI Agents - Analytics and Reporting API Routes
-import express from 'express';
+import express, { Request, Response } from 'express';
 import { AgentFramework } from '../core/AgentFramework';
 import { WorkflowEngine } from '../core/WorkflowEngine';
 import { logger } from '../utils/logger';

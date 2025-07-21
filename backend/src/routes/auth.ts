@@ -1,5 +1,5 @@
 // Barakah AI Agents - Authentication Routes
-import express from 'express';
+import express, { Request, Response } from 'express';
 import { z } from 'zod';
 import { createClient } from '@supabase/supabase-js';
 import { db } from '../config/database';
