@@ -327,7 +327,7 @@ export class WorkflowEngine {
 
   private async runWorkflow(execution: WorkflowExecution, template: WorkflowTemplate): Promise<void> {
     try {
-      let currentStepId = execution.currentStep;
+      let currentStepId: string | null = execution.currentStep;
       
       while (currentStepId) {
         const step = template.steps.find(s => s.id === currentStepId);
