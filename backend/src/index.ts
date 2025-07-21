@@ -62,7 +62,7 @@ app.use('*', (req: Request, res: Response) => {
   });
 });
 
-app.listen(PORT, () => {
+app.listen(Number(PORT), () => {
   logger.info(`🤖 Barakah AI Agents API server running on port ${PORT}`);
   logger.info(`🚀 Environment: ${process.env.NODE_ENV || 'development'}`);
   logger.info(`✨ Ready to execute intelligent workflows`);

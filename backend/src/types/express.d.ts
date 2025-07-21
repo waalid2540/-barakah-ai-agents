@@ -7,11 +7,15 @@ declare module 'express' {
     query: any;
     body: any;
     path: string;
+    originalUrl: string;
+    method: string;
+    get(header: string): string | undefined;
   }
   
   export interface Response {
     json(data: any): Response;
     status(code: number): Response;
+    set(field: string, value: string): Response;
     set(headers: any): Response;
     send(data?: any): Response;
   }
@@ -37,7 +41,7 @@ declare module 'express' {
   
   function express(): Application;
   namespace express {
-    function json(): any;
+    function json(options?: any): any;
     function urlencoded(options?: any): any;
     function static(path: string): any;
     function Router(): Router;
@@ -52,6 +56,6 @@ declare module 'cors' {
 }
 
 declare module 'morgan' {
-  function morgan(format: string): any;
+  function morgan(format: string, options?: any): any;
   export = morgan;
 }
