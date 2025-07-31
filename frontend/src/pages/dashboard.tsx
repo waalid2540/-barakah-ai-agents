@@ -620,3 +620,10 @@ const Dashboard: React.FC = () => {
 };
 
 export default Dashboard;
+
+// Disable SSG for this page since it uses auth context
+export async function getServerSideProps() {
+  return {
+    props: {}
+  };
+}

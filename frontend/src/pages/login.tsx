@@ -221,3 +221,10 @@ const LoginPage: React.FC = () => {
 };
 
 export default LoginPage;
+
+// Disable SSG for this page since it uses auth context
+export async function getServerSideProps() {
+  return {
+    props: {}
+  };
+}
