@@ -41,16 +41,23 @@ export interface AgentExecution {
 }
 
 export class AgentFramework {
-  private openai: OpenAI;
+  private openai: OpenAI | null = null;
   private integrationHub: IntegrationHub;
   private workflowEngine: WorkflowEngine;
   private agents: Map<string, AgentConfig> = new Map();
   private executions: Map<string, AgentExecution> = new Map();
 
   constructor() {
-    this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY
-    });
+    // Initialize OpenAI only if API key is available
+    if (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.trim() !== '') {
+      this.openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY
+      });
+      logger.info('✅ OpenAI client initialized');
+    } else {
+      logger.warn('⚠️  OpenAI API key not found - AI features will be limited');
+    }
+    
     this.integrationHub = new IntegrationHub();
     this.workflowEngine = new WorkflowEngine();
     this.initializeDefaultAgents();
@@ -277,6 +284,15 @@ You execute complete product launches, not just descriptions.`,
   }
 
   private async thinkStep(input: any, agent: AgentConfig): Promise<any> {
+    if (!this.openai) {
+      return {
+        analysis: `Mock analysis for: ${JSON.stringify(input)}. OpenAI API key not configured.`,
+        context: input,
+        timestamp: new Date(),
+        mock: true
+      };
+    }
+
     const response = await this.openai.chat.completions.create({
       model: 'gpt-4',
       messages: [
@@ -294,6 +310,16 @@ You execute complete product launches, not just descriptions.`,
   }
 
   private async planStep(input: any, agent: AgentConfig): Promise<any> {
+    if (!this.openai) {
+      return {
+        plan: `Mock plan for: ${JSON.stringify(input)}. OpenAI API key not configured.`,
+        steps: [],
+        timeline: new Date(),
+        requirements: agent.integrations,
+        mock: true
+      };
+    }
+
     const response = await this.openai.chat.completions.create({
       model: 'gpt-4',
       messages: [
@@ -312,6 +338,16 @@ You execute complete product launches, not just descriptions.`,
   }
 
   private async executeStep_Main(input: any, agent: AgentConfig): Promise<any> {
+    if (!this.openai) {
+      return {
+        deliverable: `Mock deliverable for: ${JSON.stringify(input)}. OpenAI API key not configured.`,
+        type: agent.id,
+        ready_for_integration: true,
+        timestamp: new Date(),
+        mock: true
+      };
+    }
+
     const response = await this.openai.chat.completions.create({
       model: 'gpt-4',
       messages: [
@@ -357,5 +393,20 @@ You execute complete product launches, not just descriptions.`,
 
   getExecutionsByUser(userId: string): AgentExecution[] {
     return Array.from(this.executions.values()).filter(exec => exec.userId === userId);
+  }
+
+  isOpenAIAvailable(): boolean {
+    return this.openai !== null;
+  }
+
+  getSystemStatus(): { openai: boolean; integrations: boolean; message: string } {
+    const openaiStatus = this.isOpenAIAvailable();
+    return {
+      openai: openaiStatus,
+      integrations: true, // Integration hub is always available
+      message: openaiStatus 
+        ? 'All systems operational' 
+        : 'OpenAI API key missing - set OPENAI_API_KEY environment variable for full functionality'
+    };
   }
 }

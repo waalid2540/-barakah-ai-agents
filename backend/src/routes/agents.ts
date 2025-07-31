@@ -5,7 +5,15 @@ import { AgentFramework } from '../core/AgentFramework';
 import { logger } from '../utils/logger';
 
 const router = express.Router();
-const agentFramework = new AgentFramework();
+let agentFramework: AgentFramework;
+
+// Initialize AgentFramework lazily to handle environment variable issues
+function getAgentFramework(): AgentFramework {
+  if (!agentFramework) {
+    agentFramework = new AgentFramework();
+  }
+  return agentFramework;
+}
 
 // Validation schemas
 const executeAgentSchema = z.object({
@@ -17,7 +25,7 @@ const executeAgentSchema = z.object({
 // GET /api/agents - List all available agents
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const agents = agentFramework.getAllAgents();
+    const agents = getAgentFramework().getAllAgents();
     res.json({
       success: true,
       data: agents,
@@ -37,7 +45,7 @@ router.get('/', async (req: Request, res: Response) => {
 router.get('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const agent = agentFramework.getAgent(id);
+    const agent = getAgentFramework().getAgent(id);
     
     if (!agent) {
       return res.status(404).json({
@@ -82,7 +90,7 @@ router.post('/:id/execute', async (req: Request, res: Response) => {
     const userId = req.headers['x-user-id'] as string || 'anonymous';
 
     // Start agent execution
-    const executionId = await agentFramework.executeAgent(id, userId, input, apiKeys);
+    const executionId = await getAgentFramework().executeAgent(id, userId, input, apiKeys);
 
     res.json({
       success: true,
@@ -109,7 +117,7 @@ router.post('/:id/execute', async (req: Request, res: Response) => {
 router.get('/execution/:executionId', async (req: Request, res: Response) => {
   try {
     const { executionId } = req.params;
-    const execution = agentFramework.getExecution(executionId);
+    const execution = getAgentFramework().getExecution(executionId);
 
     if (!execution) {
       return res.status(404).json({
@@ -150,7 +158,7 @@ router.get('/executions/user/:userId', async (req: Request, res: Response) => {
     const { userId } = req.params;
     const { limit = 50, offset = 0 } = req.query;
 
-    const executions = agentFramework.getExecutionsByUser(userId);
+    const executions = getAgentFramework().getExecutionsByUser(userId);
     
     // Paginate results
     const paginatedExecutions = executions
@@ -182,7 +190,7 @@ router.get('/executions/user/:userId', async (req: Request, res: Response) => {
 router.post('/:id/test', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const agent = agentFramework.getAgent(id);
+    const agent = getAgentFramework().getAgent(id);
 
     if (!agent) {
       return res.status(404).json({
@@ -196,7 +204,7 @@ router.post('/:id/test', async (req: Request, res: Response) => {
     const testData = getTestDataForAgent(id);
     const userId = 'test-user';
 
-    const executionId = await agentFramework.executeAgent(id, userId, testData);
+    const executionId = await getAgentFramework().executeAgent(id, userId, testData);
 
     res.json({
       success: true,

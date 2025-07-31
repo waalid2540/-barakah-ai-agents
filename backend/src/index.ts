@@ -11,11 +11,22 @@ import { analyticsRoutes } from './routes/analytics';
 import { errorHandler } from './middleware/errorHandler';
 import { rateLimiter } from './middleware/rateLimiter';
 import { logger } from './utils/logger';
+import { AgentFramework } from './core/AgentFramework';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// Initialize Agent Framework lazily for health checks
+let agentFramework: AgentFramework;
+
+function getAgentFramework(): AgentFramework {
+  if (!agentFramework) {
+    agentFramework = new AgentFramework();
+  }
+  return agentFramework;
+}
 
 // Security middleware
 app.use(helmet());
@@ -36,11 +47,17 @@ app.use(express.urlencoded({ extended: true }));
 
 // Health check
 app.get('/health', (req: Request, res: Response) => {
+  const systemStatus = getAgentFramework().getSystemStatus();
   res.json({ 
     status: 'healthy', 
     service: 'Barakah AI Agents API',
     timestamp: new Date().toISOString(),
-    version: '1.0.0'
+    version: '1.0.0',
+    systems: systemStatus,
+    environment: {
+      node_env: process.env.NODE_ENV || 'development',
+      openai_configured: !!process.env.OPENAI_API_KEY
+    }
   });
 });
 

@@ -19,7 +19,11 @@ services:
           name: barakah-agents-frontend
           property: host
       - key: OPENAI_API_KEY
-        sync: false  # Set manually in Render dashboard
+        sync: false  # IMPORTANT: Set this manually in Render dashboard for AI features
+      - key: SUPABASE_URL
+        sync: false  # IMPORTANT: Set this manually in Render dashboard
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false  # IMPORTANT: Set this manually in Render dashboard
       - key: LOG_LEVEL
         value: info
     healthCheckPath: /health
@@ -40,6 +44,10 @@ services:
           type: web
           name: barakah-agents-api
           property: host
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        sync: false  # IMPORTANT: Set this manually in Render dashboard
+      - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
+        sync: false  # IMPORTANT: Set this manually in Render dashboard
       - key: NEXT_PUBLIC_APP_NAME
         value: Barakah AI Agents
       - key: NEXT_PUBLIC_APP_DESCRIPTION
