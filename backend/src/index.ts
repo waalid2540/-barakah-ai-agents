@@ -45,6 +45,24 @@ app.use(morgan('combined', { stream: { write: (message: string) => logger.info(m
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+// Root route
+app.get('/', (req: Request, res: Response) => {
+  res.json({
+    service: 'Barakah AI Agents API',
+    version: '1.0.0',
+    status: 'online',
+    message: 'Welcome to Barakah AI Agents API',
+    endpoints: {
+      health: '/health',
+      agents: '/api/agents',
+      workflows: '/api/workflows',
+      integrations: '/api/integrations',
+      analytics: '/api/analytics'
+    },
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Health check
 app.get('/health', (req: Request, res: Response) => {
   const systemStatus = getAgentFramework().getSystemStatus();
