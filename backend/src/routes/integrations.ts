@@ -179,4 +179,65 @@ router.get('/categories/:type', async (req, res) => {
   }
 });
 
+// POST /api/integrations/gmail/test-email - Quick Gmail test
+router.post('/gmail/test-email', async (req, res) => {
+  try {
+    const { gmail_email, gmail_app_password, recipient_email, test_message } = req.body;
+
+    if (!gmail_email || !gmail_app_password) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing Gmail credentials. Need gmail_email and gmail_app_password'
+      });
+    }
+
+    const testRecipient = recipient_email || gmail_email; // Send to self if no recipient
+    const testContent = test_message || 'Subject: Test Email from Barakah AI Agents\n\nHello! This is a test email sent by your AI Email Campaign Agent.\n\nIf you received this, your Gmail integration is working perfectly!\n\nBest regards,\nYour AI Agent';
+
+    // Create test input for Gmail integration
+    const testInput = {
+      result: {
+        deliverable: testContent
+      },
+      apiKeys: {
+        gmail_email,
+        gmail_app_password
+      }
+    };
+
+    // Override recipient parsing for test
+    const originalParseMethod = integrationHub['parseEmailContent'];
+    integrationHub['parseEmailContent'] = (content: string) => {
+      const parsed = originalParseMethod.call(integrationHub, content);
+      parsed.to = [testRecipient]; // Force test recipient
+      return parsed;
+    };
+
+    logger.info(`🧪 Testing Gmail integration: ${gmail_email} → ${testRecipient}`);
+
+    // Execute Gmail integration test
+    const result = await integrationHub.execute('gmail', testInput);
+
+    res.json({
+      success: result.success,
+      data: result,
+      message: result.success 
+        ? `✅ Email sent successfully to ${testRecipient}!` 
+        : `❌ Email sending failed: ${result.error}`,
+      gmail_account: gmail_email,
+      recipient: testRecipient
+    });
+
+    logger.info(`Gmail test result: ${result.success ? 'SUCCESS' : 'FAILED'}`);
+
+  } catch (error: any) {
+    logger.error('Gmail test error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Gmail test failed',
+      message: error.message
+    });
+  }
+});
+
 export { router as integrationRoutes };

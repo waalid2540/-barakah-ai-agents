@@ -1,5 +1,6 @@
 // Barakah AI Agents - Integration Hub for External Services
 import axios from 'axios';
+import nodemailer from 'nodemailer';
 import { logger } from '../utils/logger';
 
 export interface IntegrationConfig {
@@ -26,15 +27,14 @@ export class IntegrationHub {
   }
 
   private initializeIntegrations() {
-    // Gmail Integration
+    // Gmail Integration (using SMTP with App Password)
     this.integrations.set('gmail', {
       id: 'gmail',
       name: 'Gmail',
       type: 'email',
-      requiredKeys: ['gmail_api_key', 'gmail_client_id'],
+      requiredKeys: ['gmail_email', 'gmail_app_password'],
       endpoints: {
-        send: 'https://gmail.googleapis.com/gmail/v1/users/me/messages/send',
-        list: 'https://gmail.googleapis.com/gmail/v1/users/me/messages'
+        smtp: 'smtp.gmail.com'
       }
     });
 
@@ -182,24 +182,63 @@ export class IntegrationHub {
       throw new Error('No email content provided');
     }
 
-    // Extract email details from deliverable
+    const gmailEmail = apiKeys.gmail_email;
+    const gmailPassword = apiKeys.gmail_app_password;
+
+    if (!gmailEmail || !gmailPassword) {
+      throw new Error('Gmail credentials missing. Need gmail_email and gmail_app_password');
+    }
+
+    // Extract email details from deliverable (AI-generated content)
     const emailData = this.parseEmailContent(deliverable);
     
-    // Simulate Gmail API call (would use actual Gmail API)
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    logger.info(`📧 Sending real email via Gmail: ${gmailEmail}`);
 
-    return {
-      success: true,
-      data: {
-        messageId: `gmail_${Date.now()}`,
-        to: emailData.to,
+    try {
+      // Create nodemailer transporter
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: gmailEmail,
+          pass: gmailPassword
+        }
+      });
+
+      // Verify connection
+      await transporter.verify();
+      logger.info('✅ Gmail SMTP connection verified');
+
+      // Send email
+      const mailOptions = {
+        from: gmailEmail,
+        to: emailData.to.join(', '),
         subject: emailData.subject,
-        sent: true,
-        timestamp: new Date()
-      },
-      timestamp: new Date(),
-      integration: 'gmail'
-    };
+        text: emailData.textBody,
+        html: emailData.htmlBody
+      };
+
+      const result = await transporter.sendMail(mailOptions);
+      
+      logger.info(`✅ Email sent successfully! Message ID: ${result.messageId}`);
+
+      return {
+        success: true,
+        data: {
+          messageId: result.messageId,
+          to: emailData.to,
+          subject: emailData.subject,
+          sent: true,
+          provider: 'Gmail SMTP',
+          timestamp: new Date()
+        },
+        timestamp: new Date(),
+        integration: 'gmail'
+      };
+
+    } catch (error: any) {
+      logger.error('❌ Gmail sending failed:', error.message);
+      throw new Error(`Gmail sending failed: ${error.message}`);
+    }
   }
 
   private async executeLinkedIn(input: any, apiKeys: Record<string, string>): Promise<IntegrationResult> {
@@ -362,13 +401,61 @@ export class IntegrationHub {
     };
   }
 
-  // Content parsing methods (simplified for demo)
+  // Content parsing methods - Enhanced for real email sending
   private parseEmailContent(content: string): any {
+    // Parse AI-generated content for email elements
+    const lines = content.split('\n').filter(line => line.trim());
+    
+    let subject = 'AI Generated Email Campaign';
+    let recipients = ['test@example.com']; // Default - will be overridden by user
+    let textBody = content;
+    let htmlBody = this.convertToHtml(content);
+
+    // Extract subject if AI provided one
+    const subjectMatch = content.match(/Subject:\s*(.+)/i);
+    if (subjectMatch) {
+      subject = subjectMatch[1].trim();
+    }
+
+    // Look for email addresses in content (recipients)
+    const emailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g;
+    const foundEmails = content.match(emailRegex);
+    if (foundEmails && foundEmails.length > 0) {
+      recipients = foundEmails;
+    }
+
+    // Clean up text body (remove subject line if it was extracted)
+    if (subjectMatch) {
+      textBody = content.replace(subjectMatch[0], '').trim();
+      htmlBody = this.convertToHtml(textBody);
+    }
+
     return {
-      to: ['example@email.com'],
-      subject: 'Generated Email',
-      body: content
+      to: recipients,
+      subject: subject,
+      textBody: textBody,
+      htmlBody: htmlBody
     };
+  }
+
+  private convertToHtml(text: string): string {
+    // Convert plain text to HTML with basic formatting
+    return `
+    <html>
+      <body style="font-family: Arial, sans-serif; line-height: 1.6; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background-color: #f4f4f4; padding: 20px; border-radius: 10px;">
+          ${text
+            .replace(/\n\n/g, '</p><p>')
+            .replace(/\n/g, '<br>')
+            .replace(/^/, '<p>')
+            .replace(/$/, '</p>')}
+        </div>
+        <footer style="text-align: center; padding: 20px; color: #666; font-size: 12px;">
+          <p>Sent by your AI Email Campaign Agent</p>
+          <p>Powered by Barakah AI Agents</p>
+        </footer>
+      </body>
+    </html>`;
   }
 
   private parseLinkedInContent(content: string): any {
