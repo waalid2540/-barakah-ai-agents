@@ -237,7 +237,15 @@ export class IntegrationHub {
 
     } catch (error: any) {
       logger.error('❌ Gmail sending failed:', error.message);
-      throw new Error(`Gmail sending failed: ${error.message}`);
+      
+      // Provide helpful error messages based on common issues
+      if (error.message.includes('Invalid login') || error.message.includes('BadCredentials')) {
+        throw new Error('Gmail login failed. Please check:\n• You\'re using a Gmail App Password (not your regular password)\n• App Password is 16 characters with no spaces\n• 2-Step Verification is enabled on your Gmail account\n• You\'re using the correct Gmail address');
+      } else if (error.message.includes('Less secure app')) {
+        throw new Error('Gmail security settings issue. Please:\n• Enable 2-Step Verification\n• Create an App Password instead of using your regular password');
+      } else {
+        throw new Error(`Gmail connection failed: ${error.message}`);
+      }
     }
   }
 
