@@ -31,7 +31,12 @@ function getAgentFramework(): AgentFramework {
 // Security middleware
 app.use(helmet());
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: [
+    process.env.FRONTEND_URL || 'http://localhost:3000',
+    'https://www.somaidata.com',
+    'http://localhost:3000',
+    'http://localhost:3001'
+  ],
   credentials: true
 }));
 
