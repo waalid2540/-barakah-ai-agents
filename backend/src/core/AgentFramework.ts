@@ -121,6 +121,38 @@ You execute complete product launches, not just descriptions.`,
       timeout: 600000 // 10 minutes
     });
 
+    // Waalid Legacy AI Parenting Coach
+    this.registerAgent({
+      id: 'waalid-legacy-parenting',
+      name: 'Waalid Legacy AI - Parenting Coach',
+      description: 'Ultra-smart trilingual parenting coach for Somali Muslim families in the West',
+      systemPrompt: `You are Waalid Legacy AI, an ultra-smart trilingual parenting coach specializing in helping Somali Muslim families in the West. Your mission is to:
+
+1. THINK: Deeply analyze parenting challenges through Islamic, cultural, and psychological lenses
+2. PLAN: Create holistic guidance strategies that bridge Somali heritage with Western society
+3. EXECUTE: Provide actionable, compassionate advice with Islamic wisdom integration
+4. INTEGRATE: Connect families with community resources and support systems
+5. VERIFY: Follow up with family progress and adaptive guidance
+
+You understand the unique challenges of raising Muslim children in Western societies while preserving Somali culture and Islamic values. You speak English, Somali, and Arabic fluently.
+
+Key areas of expertise:
+- Islamic parenting principles and Quranic guidance
+- Somali cultural traditions and language preservation
+- Western education system navigation
+- Teen identity and peer pressure challenges
+- Prayer and religious practice motivation
+- Cultural bridge building and identity pride
+- Crisis intervention and family harmony
+- School advocacy and parent rights
+
+Always respond with empathy, Islamic wisdom, practical steps, and cultural understanding. Include relevant Quranic verses or Hadith when appropriate.`,
+      tools: ['family-analysis', 'islamic-guidance', 'cultural-bridge', 'crisis-support'],
+      integrations: ['community-resources', 'islamic-centers', 'school-systems'],
+      maxSteps: 8,
+      timeout: 180000 // 3 minutes
+    });
+
     logger.info('✅ Default agents initialized');
   }
 
@@ -348,6 +380,11 @@ You execute complete product launches, not just descriptions.`,
       };
     }
 
+    // Special handling for Waalid Legacy Parenting Coach
+    if (agent.id === 'waalid-legacy-parenting') {
+      return await this.executeParentingGuidance(input, agent);
+    }
+
     const response = await this.openai.chat.completions.create({
       model: 'gpt-4',
       messages: [
@@ -360,6 +397,65 @@ You execute complete product launches, not just descriptions.`,
     return {
       deliverable: response.choices[0].message.content,
       type: agent.id,
+      ready_for_integration: true,
+      timestamp: new Date()
+    };
+  }
+
+  private async executeParentingGuidance(input: any, agent: AgentConfig): Promise<any> {
+    // Extract context from planning phase
+    const parentingContext = input.plan || input;
+    const originalRequest = parentingContext.request || parentingContext.message;
+    const familyContext = parentingContext.familyContext || {};
+    const language = parentingContext.language || 'english';
+
+    const prompt = `You are providing personalized parenting guidance for a Somali Muslim family. 
+
+CONTEXT:
+- Parent's question: "${originalRequest}"
+- Language preference: ${language}
+- Family context: ${JSON.stringify(familyContext)}
+
+Provide ultra-smart guidance that includes:
+1. Empathetic understanding of their specific challenge
+2. Islamic wisdom with relevant Quranic verses or Hadith
+3. Cultural bridge advice for Somali families in the West
+4. Specific action steps they can take
+5. Follow-up questions to deepen support
+
+Respond in ${language === 'somali' ? 'Somali' : language === 'arabic' ? 'Arabic' : 'English'}.
+Start with "🤲 Assalamu Alaikum" and be warm, understanding, and practical.`;
+
+    const response = await this.openai!.chat.completions.create({
+      model: 'gpt-4',
+      messages: [
+        { role: 'system', content: agent.systemPrompt },
+        { role: 'user', content: prompt }
+      ],
+      max_tokens: 2000,
+      temperature: 0.8
+    });
+
+    return {
+      deliverable: response.choices[0].message.content,
+      type: 'parenting-guidance',
+      language: language,
+      familyContext: familyContext,
+      guidance: {
+        response: response.choices[0].message.content,
+        followUp: [
+          "How did your child respond to this approach?",
+          "What specific situations trigger these challenges?",
+          "How can we involve the community in supporting your family?",
+          "What has worked well for your family in the past?"
+        ],
+        resources: [
+          "Connect with local Somali Muslim families",
+          "Reach out to Islamic family counselors", 
+          "Join online Somali parenting communities",
+          "Consult with your local imam for Islamic guidance"
+        ]
+      },
       ready_for_integration: true,
       timestamp: new Date()
     };

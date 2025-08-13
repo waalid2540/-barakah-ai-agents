@@ -252,6 +252,18 @@ function getTestDataForAgent(agentId: string): any {
         targetMarket: 'Small to medium businesses looking to scale with AI'
       };
     
+    case 'waalid-legacy-parenting':
+      return {
+        request: 'My 14-year-old son is struggling with maintaining his prayer schedule while dealing with peer pressure at school. How can I help him stay connected to Islam while fitting in with his classmates?',
+        language: 'english',
+        familyContext: {
+          parentName: 'Sister Amina',
+          childAge: 14,
+          location: 'Minneapolis, MN',
+          challenges: ['prayer_consistency', 'peer_pressure', 'religious_identity']
+        }
+      };
+    
     default:
       return {
         message: 'This is a test execution for agent: ' + agentId,
