@@ -403,11 +403,28 @@ Always respond with empathy, Islamic wisdom, practical steps, and cultural under
   }
 
   private async executeParentingGuidance(input: any, agent: AgentConfig): Promise<any> {
-    // Extract context from planning phase
-    const parentingContext = input.plan || input;
-    const originalRequest = parentingContext.request || parentingContext.message;
-    const familyContext = parentingContext.familyContext || {};
-    const language = parentingContext.language || 'english';
+    // Debug: Log the full input structure
+    console.log('🔍 PARENTING GUIDANCE INPUT:', JSON.stringify(input, null, 2));
+    
+    // Extract context from planning phase or direct input
+    const parentingContext = input.plan || input.context || input;
+    
+    // Try multiple possible sources for the original request
+    let originalRequest = parentingContext.request || 
+                         parentingContext.message || 
+                         (parentingContext.task && parentingContext.task.request) ||
+                         (input.context && input.context.request) ||
+                         'general parenting guidance';
+    
+    console.log('🎯 EXTRACTED REQUEST:', originalRequest);
+    
+    const familyContext = parentingContext.familyContext || 
+                         (parentingContext.task && parentingContext.task.familyContext) ||
+                         (input.context && input.context.familyContext) || {};
+    
+    const language = parentingContext.language || 
+                    (parentingContext.task && parentingContext.task.language) ||
+                    (input.context && input.context.language) || 'english';
 
     const prompt = `You are providing personalized parenting guidance for a Somali Muslim family. 
 
